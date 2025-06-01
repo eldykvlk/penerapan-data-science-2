@@ -4,7 +4,7 @@ import joblib
 import numpy as np
 
 # --- Streamlit App Configuration (MUST be the first Streamlit command) ---
-st.set_page_config(page_title="Jaya Jaya Institut Dropout Prediction", layout="wide") # Changed to wide layout for more inputs
+st.set_page_config(page_title="Jaya Jaya Institut Dropout Prediction", layout="wide")
 
 # --- Configuration ---
 MODEL_PATH = 'model/random_forest_model.joblib'
@@ -33,17 +33,178 @@ model = load_model(MODEL_PATH)
 df_template = load_data(DATA_PATH)
 
 if model is None or df_template is None:
-    st.stop() # Stop the app if crucial files are missing
+    st.stop()
 
 # Drop the 'Status' column from the template DataFrame as it's the target
 if 'Status' in df_template.columns:
     df_template = df_template.drop(columns=['Status'])
 
-# --- Function to get unique values for selectboxes ---
-def get_unique_values(column_name):
-    if column_name in df_template.columns:
-        return sorted(df_template[column_name].unique().tolist())
-    return []
+# --- Mapping Dictionaries for User-Friendly Options ---
+MARITAL_STATUS = {
+    "Single": 1,
+    "Married": 2,
+    "Widower": 3,
+    "Divorced": 4,
+    "Facto Union": 5,
+    "Legally Separated": 6
+}
+
+APPLICATION_MODE = {
+    "1st phase - general contingent": 1,
+    "Ordinance No. 612/93": 2,
+    "1st phase - special contingent (Azores Island)": 5,
+    "Holders of other higher courses": 7,
+    "Ordinance No. 854-B/99": 10,
+    "International student (bachelor)": 15,
+    "1st phase - special contingent (Madeira Island)": 16,
+    "2nd phase - general contingent": 17,
+    "3rd phase - general contingent": 18,
+    "Ordinance No. 533-A/99, item b2) (Different Plan)": 26,
+    "Ordinance No. 533-A/99, item b3 (Other Institution)": 27,
+    "Over 23 years old": 39,
+    "Transfer": 42,
+    "Change of course": 43,
+    "Technological specialization diploma holders": 44,
+    "Change of institution/course": 51,
+    "Short cycle diploma holders": 53,
+    "Change of institution/course (International)": 57
+}
+
+COURSES = {
+    "Biofuel Production Technologies": 33,
+    "Animation and Multimedia Design": 171,
+    "Social Service (evening attendance)": 8014,
+    "Agronomy": 9003,
+    "Communication Design": 9070,
+    "Veterinary Nursing": 9085,
+    "Informatics Engineering": 9119,
+    "Equinculture": 9130,
+    "Management": 9147,
+    "Social Service": 9238,
+    "Tourism": 9254,
+    "Nursing": 9500,
+    "Oral Hygiene": 9556,
+    "Advertising and Marketing Management": 9670,
+    "Journalism and Communication": 9773,
+    "Basic Education": 9853,
+    "Management (evening attendance)": 9991
+}
+
+PREVIOUS_QUALIFICATION = {
+    "Secondary education": 1,
+    "Higher education - bachelor's degree": 2,
+    "Higher education - degree": 3,
+    "Higher education - master's": 4,
+    "Higher education - doctorate": 5,
+    "Frequency of higher education": 6,
+    "12th year of schooling - not completed": 9,
+    "11th year of schooling - not completed": 10,
+    "Other - 11th year of schooling": 12,
+    "10th year of schooling": 14,
+    "10th year of schooling - not completed": 15,
+    "Basic education 3rd cycle (9th/10th/11th year) or equiv.": 19,
+    "Basic education 2nd cycle (6th/7th/8th year) or equiv.": 38,
+    "Technological specialization course": 39,
+    "Higher education - degree (1st cycle)": 40,
+    "Professional higher technical course": 42,
+    "Higher education - master (2nd cycle)": 43
+}
+
+NATIONALITY = {
+    "Portuguese": 1,
+    "German": 2,
+    "Spanish": 6,
+    "Italian": 11,
+    "Dutch": 13,
+    "English": 14,
+    "Lithuanian": 17,
+    "Angolan": 21,
+    "Cape Verdean": 22,
+    "Guinean": 24,
+    "Mozambican": 25,
+    "Santomean": 26,
+    "Turkish": 32,
+    "Brazilian": 41,
+    "Romanian": 62,
+    "Moldova (Republic of)": 100,
+    "Mexican": 101,
+    "Ukrainian": 103,
+    "Russian": 105,
+    "Cuban": 108,
+    "Colombian": 109
+}
+
+PARENT_QUALIFICATION = {
+    "Secondary Education - 12th Year of Schooling or Eq.": 1,
+    "Higher Education - Bachelor's Degree": 2,
+    "Higher Education - Degree": 3,
+    "Higher Education - Master's": 4,
+    "Higher Education - Doctorate": 5,
+    "Frequency of Higher Education": 6,
+    "12th Year of Schooling - Not Completed": 9,
+    "11th Year of Schooling - Not Completed": 10,
+    "7th Year (Old)": 11,
+    "Other - 11th Year of Schooling": 12,
+    "2nd year complementary high school course": 13,
+    "10th Year of Schooling": 14,
+    "General commerce course": 18,
+    "Basic Education 3rd Cycle (9th/10th/11th Year) or Equiv.": 19,
+    "Complementary High School Course": 20,
+    "Technical-professional course": 22,
+    "Complementary High School Course - not concluded": 25,
+    "7th year of schooling": 26,
+    "2nd cycle of the general high school course": 27,
+    "9th Year of Schooling - Not Completed": 29,
+    "8th year of schooling": 30,
+    "General Course of Administration and Commerce": 31,
+    "Supplementary Accounting and Administration": 33,
+    "Unknown": 34,
+    "Can't read or write": 35,
+    "Can read without having a 4th year of schooling": 36,
+    "Basic education 1st cycle (4th/5th year) or equiv.": 37,
+    "Basic Education 2nd Cycle (6th/7th/8th Year) or Equiv.": 38,
+    "Technological specialization course": 39,
+    "Higher education - degree (1st cycle)": 40,
+    "Specialized higher studies course": 41,
+    "Professional higher technical course": 42,
+    "Higher Education - Master (2nd cycle)": 43,
+    "Higher Education - Doctorate (3rd cycle)": 44
+}
+
+PARENT_OCCUPATION = {
+    "Student": 0,
+    "Representatives of the Legislative Power and Executive Bodies, Directors, Directors and Executive Managers": 1,
+    "Specialists in Intellectual and Scientific Activities": 2,
+    "Intermediate Level Technicians and Professions": 3,
+    "Administrative staff": 4,
+    "Personal Services, Security and Safety Workers and Sellers": 5,
+    "Farmers and Skilled Workers in Agriculture, Fisheries and Forestry": 6,
+    "Skilled Workers in Industry, Construction and Craftsmen": 7,
+    "Installation and Machine Operators and Assembly Workers": 8,
+    "Unskilled Workers": 9,
+    "Armed Forces Professions": 10,
+    "Other Situation": 90,
+    "(blank)": 99,
+    "Health professionals": 122,
+    "Teachers": 123,
+    "Specialists in information and communication technologies (ICT)": 125,
+    "Intermediate level science and engineering technicians and professions": 131,
+    "Technicians and professionals, of intermediate level of health": 132,
+    "Intermediate level technicians from legal, social, sports, cultural and similar services": 134,
+    "Office workers, secretaries in general and data processing operators": 141,
+    "Data, accounting, statistical, financial services and registry-related operators": 143,
+    "Other administrative support staff": 144,
+    "Personal service workers": 151,
+    "Sellers": 152,
+    "Personal care workers and the like": 153,
+    "Skilled construction workers and the like, except electricians": 171,
+    "Skilled workers in printing, precision instrument manufacturing, jewelers, artisans and the like": 173,
+    "Workers in food processing, woodworking, clothing and other industries and crafts": 175,
+    "Cleaning workers": 191,
+    "Unskilled workers in agriculture, animal production, fisheries and forestry": 192,
+    "Unskilled workers in extractive industry, construction, manufacturing and transport": 193,
+    "Meal preparation assistants": 194
+}
 
 # --- Streamlit App Content ---
 st.title("Jaya Jaya Institut: Deteksi Dini Potensi Dropout")
@@ -63,11 +224,11 @@ with st.expander("1. Informasi Pribadi & Pendaftaran", expanded=True):
     col1, col2, col3 = st.columns(3)
     with col1:
         user_inputs['Marital_status'] = st.selectbox(
-            "Status Pernikahan", get_unique_values('Marital_status'),
+            "Status Pernikahan", options=list(MARITAL_STATUS.keys()),
             help="Status pernikahan siswa saat ini."
         )
         user_inputs['Application_mode'] = st.selectbox(
-            "Mode Aplikasi", get_unique_values('Application_mode'),
+            "Mode Aplikasi", options=list(APPLICATION_MODE.keys()),
             help="Cara siswa mendaftar ke institusi (misalnya, tes masuk, jalur prestasi)."
         )
         user_inputs['Application_order'] = st.selectbox(
@@ -76,15 +237,15 @@ with st.expander("1. Informasi Pribadi & Pendaftaran", expanded=True):
         )
     with col2:
         user_inputs['Course'] = st.selectbox(
-            "Jurusan/Program Studi", get_unique_values('Course'),
+            "Jurusan/Program Studi", options=list(COURSES.keys()),
             help="Program studi yang diambil siswa."
         )
         user_inputs['Daytime_evening_attendance'] = st.selectbox(
-            "Kehadiran Siang/Malam", options=[0, 1], format_func=lambda x: "Malam" if x==0 else "Siang", index=1,
-            help="0: Malam, 1: Siang. Apakah siswa kuliah di kelas siang atau malam."
+            "Kehadiran Siang/Malam", options=["Siang", "Malam"], index=0,
+            help="Apakah siswa kuliah di kelas siang atau malam."
         )
         user_inputs['Previous_qualification'] = st.selectbox(
-            "Kualifikasi Sebelumnya", get_unique_values('Previous_qualification'),
+            "Kualifikasi Sebelumnya", options=list(PREVIOUS_QUALIFICATION.keys()),
             help="Kualifikasi pendidikan terakhir sebelum masuk institusi (misalnya, SMA, D3)."
         )
     with col3:
@@ -93,7 +254,7 @@ with st.expander("1. Informasi Pribadi & Pendaftaran", expanded=True):
             help="Nilai rata-rata kualifikasi pendidikan sebelumnya."
         )
         user_inputs['Nacionality'] = st.selectbox(
-            "Kewarganegaraan", get_unique_values('Nacionality'),
+            "Kewarganegaraan", options=list(NATIONALITY.keys()),
             help="Kewarganegaraan siswa."
         )
         user_inputs['Admission_grade'] = st.number_input(
@@ -106,25 +267,25 @@ with st.expander("2. Latar Belakang Keluarga & Demografi"):
     col1, col2, col3 = st.columns(3)
     with col1:
         user_inputs['Mothers_qualification'] = st.selectbox(
-            "Kualifikasi Pendidikan Ibu", get_unique_values('Mothers_qualification'),
+            "Kualifikasi Pendidikan Ibu", options=list(PARENT_QUALIFICATION.keys()),
             help="Tingkat pendidikan ibu siswa."
         )
         user_inputs['Fathers_qualification'] = st.selectbox(
-            "Kualifikasi Pendidikan Ayah", get_unique_values('Fathers_qualification'),
+            "Kualifikasi Pendidikan Ayah", options=list(PARENT_QUALIFICATION.keys()),
             help="Tingkat pendidikan ayah siswa."
         )
         user_inputs['Mothers_occupation'] = st.selectbox(
-            "Pekerjaan Ibu", get_unique_values('Mothers_occupation'),
+            "Pekerjaan Ibu", options=list(PARENT_OCCUPATION.keys()),
             help="Jenis pekerjaan ibu siswa."
         )
     with col2:
         user_inputs['Fathers_occupation'] = st.selectbox(
-            "Pekerjaan Ayah", get_unique_values('Fathers_occupation'),
+            "Pekerjaan Ayah", options=list(PARENT_OCCUPATION.keys()),
             help="Jenis pekerjaan ayah siswa."
         )
         user_inputs['Gender'] = st.selectbox(
-            "Jenis Kelamin", options=[0, 1], format_func=lambda x: "Perempuan" if x==0 else "Laki-laki", index=1,
-            help="0: Perempuan, 1: Laki-laki."
+            "Jenis Kelamin", options=["Laki-laki", "Perempuan"], index=0,
+            help="Jenis kelamin siswa."
         )
         user_inputs['Age_at_enrollment'] = st.number_input(
             "Usia Saat Pendaftaran (Tahun)", min_value=17, max_value=60, value=20,
@@ -132,12 +293,12 @@ with st.expander("2. Latar Belakang Keluarga & Demografi"):
         )
     with col3:
         user_inputs['Displaced'] = st.selectbox(
-            "Pindah Domisili", options=[0, 1], format_func=lambda x: "Tidak" if x==0 else "Ya", index=0,
-            help="Apakah siswa pindah domisili untuk kuliah? (0: Tidak, 1: Ya)"
+            "Pindah Domisili", options=["Tidak", "Ya"], index=0,
+            help="Apakah siswa pindah domisili untuk kuliah?"
         )
         user_inputs['International'] = st.selectbox(
-            "Siswa Internasional", options=[0, 1], format_func=lambda x: "Tidak" if x==0 else "Ya", index=0,
-            help="Apakah siswa berasal dari luar negeri? (0: Tidak, 1: Ya)"
+            "Siswa Internasional", options=["Tidak", "Ya"], index=0,
+            help="Apakah siswa berasal dari luar negeri?"
         )
 
 # --- Bagian 3: Status Akademik & Finansial ---
@@ -145,21 +306,21 @@ with st.expander("3. Status Akademik & Finansial"):
     col1, col2, col3 = st.columns(3)
     with col1:
         user_inputs['Educational_special_needs'] = st.selectbox(
-            "Kebutuhan Khusus Pendidikan", options=[0, 1], format_func=lambda x: "Tidak" if x==0 else "Ya", index=0,
-            help="Apakah siswa memiliki kebutuhan khusus pendidikan? (0: Tidak, 1: Ya)"
+            "Kebutuhan Khusus Pendidikan", options=["Tidak", "Ya"], index=0,
+            help="Apakah siswa memiliki kebutuhan khusus pendidikan?"
         )
         user_inputs['Debtor'] = st.selectbox(
-            "Memiliki Tunggakan", options=[0, 1], format_func=lambda x: "Tidak" if x==0 else "Ya", index=0,
-            help="Apakah siswa memiliki tunggakan pembayaran? (0: Tidak, 1: Ya)"
+            "Memiliki Tunggakan", options=["Tidak", "Ya"], index=0,
+            help="Apakah siswa memiliki tunggakan pembayaran?"
         )
         user_inputs['Tuition_fees_up_to_date'] = st.selectbox(
-            "Pembayaran Uang Kuliah Tepat Waktu", options=[0, 1], format_func=lambda x: "Tidak" if x==0 else "Ya", index=1,
-            help="Apakah siswa membayar uang kuliah tepat waktu? (0: Tidak, 1: Ya)"
+            "Pembayaran Uang Kuliah Tepat Waktu", options=["Tidak", "Ya"], index=1,
+            help="Apakah siswa membayar uang kuliah tepat waktu?"
         )
     with col2:
         user_inputs['Scholarship_holder'] = st.selectbox(
-            "Penerima Beasiswa", options=[0, 1], format_func=lambda x: "Tidak" if x==0 else "Ya", index=0,
-            help="Apakah siswa adalah penerima beasiswa? (0: Tidak, 1: Ya)"
+            "Penerima Beasiswa", options=["Tidak", "Ya"], index=0,
+            help="Apakah siswa adalah penerima beasiswa?"
         )
         user_inputs['Curricular_units_1st_sem_credited'] = st.number_input(
             "Unit Kurikuler Sem 1 yang Dikreditkan", min_value=0, max_value=30, value=0,
@@ -241,7 +402,26 @@ with st.expander("5. Indikator Ekonomi Makro"):
 st.markdown("---")
 if st.button("Prediksi Potensi Dropout"):
     if model is not None and df_template is not None:
-        # Create a new DataFrame for prediction, copying the template structure and filling with defaults
+        # Convert user-friendly inputs back to numerical values
+        user_inputs['Marital_status'] = MARITAL_STATUS[user_inputs['Marital_status']]
+        user_inputs['Application_mode'] = APPLICATION_MODE[user_inputs['Application_mode']]
+        user_inputs['Course'] = COURSES[user_inputs['Course']]
+        user_inputs['Daytime_evening_attendance'] = 1 if user_inputs['Daytime_evening_attendance'] == "Siang" else 0
+        user_inputs['Previous_qualification'] = PREVIOUS_QUALIFICATION[user_inputs['Previous_qualification']]
+        user_inputs['Nacionality'] = NATIONALITY[user_inputs['Nacionality']]
+        user_inputs['Mothers_qualification'] = PARENT_QUALIFICATION[user_inputs['Mothers_qualification']]
+        user_inputs['Fathers_qualification'] = PARENT_QUALIFICATION[user_inputs['Fathers_qualification']]
+        user_inputs['Mothers_occupation'] = PARENT_OCCUPATION[user_inputs['Mothers_occupation']]
+        user_inputs['Fathers_occupation'] = PARENT_OCCUPATION[user_inputs['Fathers_occupation']]
+        user_inputs['Gender'] = 1 if user_inputs['Gender'] == "Laki-laki" else 0
+        user_inputs['Displaced'] = 1 if user_inputs['Displaced'] == "Ya" else 0
+        user_inputs['International'] = 1 if user_inputs['International'] == "Ya" else 0
+        user_inputs['Educational_special_needs'] = 1 if user_inputs['Educational_special_needs'] == "Ya" else 0
+        user_inputs['Debtor'] = 1 if user_inputs['Debtor'] == "Ya" else 0
+        user_inputs['Tuition_fees_up_to_date'] = 1 if user_inputs['Tuition_fees_up_to_date'] == "Ya" else 0
+        user_inputs['Scholarship_holder'] = 1 if user_inputs['Scholarship_holder'] == "Ya" else 0
+
+        # Create a new DataFrame for prediction
         input_df = pd.DataFrame(index=[0], columns=df_template.columns)
 
         # Fill with median/mode values from the template
@@ -260,40 +440,20 @@ if st.button("Prediksi Potensi Dropout"):
                 input_df[key] = value
 
         # --- Re-create Engineered Features ---
-        if 'Age_Squared' in input_df.columns:
-            input_df['Age_Squared'] = input_df['Age_at_enrollment'] ** 2
+        input_df['Age_Squared'] = input_df['Age_at_enrollment'] ** 2
+        
+        if input_df['Curricular_units_1st_sem_enrolled'].iloc[0] > 0:
+            input_df['Academic_Performance_1st_Sem'] = (input_df['Curricular_units_1st_sem_grade'] * input_df['Curricular_units_1st_sem_approved']) / input_df['Curricular_units_1st_sem_enrolled']
         else:
-            input_df['Age_Squared'] = input_df['Age_at_enrollment'] ** 2
-
-        if 'Academic_Performance_1st_Sem' in input_df.columns:
-            if input_df['Curricular_units_1st_sem_enrolled'].iloc[0] > 0:
-                input_df['Academic_Performance_1st_Sem'] = (input_df['Curricular_units_1st_sem_grade'] * input_df['Curricular_units_1st_sem_approved']) / input_df['Curricular_units_1st_sem_enrolled']
-            else:
-                input_df['Academic_Performance_1st_Sem'] = 0.0
-        else:
-            if input_df['Curricular_units_1st_sem_enrolled'].iloc[0] > 0:
-                input_df['Academic_Performance_1st_Sem'] = (input_df['Curricular_units_1st_sem_grade'] * input_df['Curricular_units_1st_sem_approved']) / input_df['Curricular_units_1st_sem_enrolled']
-            else:
-                input_df['Academic_Performance_1st_Sem'] = 0.0
+            input_df['Academic_Performance_1st_Sem'] = 0.0
 
         failed_courses_1st_sem = input_df['Curricular_units_1st_sem_enrolled'] - input_df['Curricular_units_1st_sem_approved']
         failed_courses_2nd_sem = input_df['Curricular_units_2nd_sem_enrolled'] - input_df['Curricular_units_2nd_sem_approved']
         total_failed_courses = failed_courses_1st_sem + failed_courses_2nd_sem
 
-        if 'Interaction_Grade_Failed_Courses' in input_df.columns:
-            input_df['Interaction_Grade_Failed_Courses'] = input_df['Admission_grade'] * total_failed_courses
-        else:
-            input_df['Interaction_Grade_Failed_Courses'] = input_df['Admission_grade'] * total_failed_courses
-
-        if 'Interaction_Mother_Father_Qual' in input_df.columns:
-            input_df['Interaction_Mother_Father_Qual'] = input_df['Mothers_qualification'] * input_df['Fathers_qualification']
-        else:
-            input_df['Interaction_Mother_Father_Qual'] = input_df['Mothers_qualification'] * input_df['Fathers_qualification']
-
-        if 'Combined_Parents_Qual' in input_df.columns:
-            input_df['Combined_Parents_Qual'] = input_df['Mothers_qualification'] + input_df['Fathers_qualification']
-        else:
-            input_df['Combined_Parents_Qual'] = input_df['Mothers_qualification'] + input_df['Fathers_qualification']
+        input_df['Interaction_Grade_Failed_Courses'] = input_df['Admission_grade'] * total_failed_courses
+        input_df['Interaction_Mother_Father_Qual'] = input_df['Mothers_qualification'] * input_df['Fathers_qualification']
+        input_df['Combined_Parents_Qual'] = input_df['Mothers_qualification'] + input_df['Fathers_qualification']
 
         input_data_processed = pd.DataFrame(0, index=[0], columns=df_template.columns)
         for col in input_df.columns:
@@ -336,4 +496,3 @@ if st.button("Prediksi Potensi Dropout"):
 
 st.markdown("---")
 st.caption("Aplikasi Prediksi Dropout oleh Jaya Jaya Institut")
-
