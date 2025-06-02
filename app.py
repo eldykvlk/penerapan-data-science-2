@@ -7,7 +7,7 @@ import numpy as np
 st.set_page_config(page_title="Jaya Jaya Institut Dropout Prediction", layout="wide")
 
 # --- Configuration ---
-MODEL_PATH = 'model/random_forest_model.joblib'
+MODEL_PATH = 'model/decision_tree_model.joblib'
 DATA_PATH = 'dataset/cleaned_student_data.csv'
 
 # --- Load Model and Data ---
@@ -17,7 +17,7 @@ def load_model(path):
         model = joblib.load(path)
         return model
     except FileNotFoundError:
-        st.error(f"Error: Model file not found at {path}. Please make sure 'random_forest_model.joblib' is in the 'model/' directory.")
+        st.error(f"Error: Model file not found at {path}. Please make sure 'decision_tree_model.joblib' is in the 'model/' directory.")
         return None
 
 @st.cache_data
