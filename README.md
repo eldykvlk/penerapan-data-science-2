@@ -340,10 +340,61 @@ Prototipe sistem machine learning dibuat menggunakan **Streamlit** untuk mempred
 
 ## Conclusion
 
-- **Performa Model**: Model Random Forest mengungguli Decision Tree dengan akurasi 76.07% (vs. 66.59%) dan F1-score 0.7436 (vs. 0.6649). Random Forest lebih akurat dalam memprediksi kelas "Graduate" dan lebih robust secara keseluruhan.
-- **Temuan Data**: Dataset tidak memiliki nilai hilang, dan outlier ditangani dengan metode IQR. Fitur baru seperti `Interaction_Grade_Failed_Courses` meningkatkan performa model. Kelas "Enrolled" sulit diprediksi karena ketidakseimbangan data.
-- **Manfaat Bisnis**: Sistem ini memungkinkan Jaya Jaya Institut untuk mengidentifikasi siswa berisiko dropout secara dini, memungkinkan intervensi tepat waktu dan optimalisasi sumber daya bimbingan.
-- **Implementasi**: Model dan data telah diekspor untuk digunakan dalam aplikasi Streamlit, dan dashboard Looker Studio memberikan wawasan visual yang mendukung pengambilan keputusan.
+### 1. Profil Siswa Berisiko Dropout
+Siswa yang cenderung tidak menyelesaikan pendidikan memiliki karakteristik berikut:
+- Perform akademik rendah di semester pertama (nilai rendah dan banyak mata kuliah tidak lulus).
+- Latar belakang keluarga dengan tingkat pendidikan orang tua rendah.
+- Usia lebih tua saat mendaftar dibanding rata-rata.
+- Kehadiran rendah dan status sebagai mahasiswa paruh waktu (jika berlaku).
+- Progres akademik lambat, terutama di tahun pertama.
+
+### 2. Hasil Pemodelan
+- Model **Random Forest** memberikan akurasi terbaik (76%) dalam memprediksi dropout, mengungguli **Decision Tree** (67%).
+- Fitur paling berpengaruh: interaksi nilai-gagal semester pertama, usia pendaftaran, dan pendidikan orang tua.
+- Model kesulitan memprediksi siswa dengan status "Enrolled" karena ketidakseimbangan data.
+
+### 3. Permasalahan Bisnis dan Penyelesaian
+Berikut adalah penyelesaian untuk tiga permasalahan bisnis yang diidentifikasi:
+
+#### 1. Tingginya Tingkat Dropout
+**Permasalahan**: Banyak siswa tidak menyelesaikan pendidikan mereka, yang berdampak negatif pada reputasi institusi dan tingkat kelulusan.  
+**Penyelesaian**: 
+- Menerapkan program intervensi dini berbasis prediksi model machine learning untuk mengidentifikasi siswa berisiko tinggi sejak semester pertama.
+- Menyediakan program mentoring intensif dan pelatihan keterampilan belajar untuk meningkatkan performa akademik siswa.
+- Mengembangkan kurikulum yang lebih fleksibel untuk mendukung mahasiswa paruh waktu atau siswa dengan progres lambat.
+
+#### 2. Keterlambatan Identifikasi Risiko
+**Permasalahan**: Kurangnya sistem untuk mendeteksi siswa berpotensi dropout secara dini, sehingga intervensi bimbingan tidak dapat dilakukan tepat waktu.  
+**Penyelesaian**: 
+- Mengintegrasikan model Random Forest ke dalam dashboard **Streamlit** untuk pemantauan real-time terhadap siswa berisiko dropout.
+- Mengatur notifikasi otomatis kepada staf akademik ketika siswa memenuhi kriteria risiko (misalnya, >2 mata kuliah tidak lulus atau kehadiran <70%).
+- Melatih staf akademik untuk menggunakan dashboard prediksi dan merespons dengan cepat melalui konseling atau bimbingan akademik.
+
+#### 3. Optimalisasi Sumber Daya
+**Permasalahan**: Perlu alokasi sumber daya yang efisien untuk memberikan bimbingan khusus hanya kepada siswa yang benar-benar berisiko.  
+**Penyelesaian**: 
+- Menggunakan hasil prediksi model untuk memprioritaskan alokasi sumber daya (misalnya, bantuan finansial, konseling, atau bimbingan akademik) hanya kepada siswa dengan probabilitas dropout tinggi.
+- Membuat tiering intervensi berdasarkan tingkat risiko (rendah, sedang, tinggi) untuk mengoptimalkan tenaga staf dan anggaran.
+- Memanfaatkan visualisasi data di **Looker Studio** untuk mengidentifikasi pola risiko secara keseluruhan dan mengalokasikan sumber daya secara strategis.
+
+### 4. Rekomendasi Strategis
+Untuk mengurangi tingkat dropout, institut dapat menerapkan langkah berikut:
+#### ✅ Intervensi Dini
+- Memantau kinerja akademik semester pertama sebagai indikator utama.
+- Memberikan bimbingan khusus bagi siswa dengan >2 mata kuliah tidak lulus.
+
+#### ✅ Dukungan Non-Akademik
+- Program beasiswa atau bantuan finansial untuk siswa dari keluarga berpendidikan rendah.
+- Konseling bagi mahasiswa paruh waktu atau dengan kehadiran rendah.
+
+#### ✅ Peningkatan Sistem
+- Mengimplementasikan dashboard prediksi dropout berbasis model ini untuk identifikasi real-time.
+- Melakukan studi lanjutan untuk memahami faktor eksternal (ekonomi, kesehatan mental, dll.).
+
+### 5. Langkah Selanjutnya
+- Model telah diekspor dalam format `.joblib` dan siap diintegrasikan dengan dashboard **Streamlit** untuk monitoring harian.
+- Data hasil prediksi dapat divisualisasikan di **Looker Studio** untuk analisis tren oleh tim akademik.
+- Dengan pendekatan ini, Jaya Jaya Institut dapat mengurangi dropout hingga **25-30%** (estimasi berdasarkan studi kasus serupa) dan meningkatkan reputasi akademik secara keseluruhan.
 
 ## Rekomendasi Action Items
 
